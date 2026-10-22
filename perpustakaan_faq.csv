@@ -1,0 +1,36 @@
+﻿id,kategori,user_query,chatbot_response
+"1,Keanggotaan,Apa syarat utama jika saya mau buat kartu anggota perpustakaan?,""Syarat utamanya adalah mengisi formulir pendaftaran dengan melakukan scan barcode, mengisi data diri, foto formal (menggunakan almamater, opsional), dan foto KTM/KTP untuk menunjukkan bukti bahwa kamu mahasiswa UNIJA."""
+"2,Keanggotaan,Apakah pendaftaran anggota perpustakaan ini ada biayanya?,""Pendaftaran anggota untuk perpustakaan umum biasanya gratis. Namun, untuk jenis perpustakaan tertentu (akademik/khusus), mungkin ada biaya bagi non-anggota institusi."""
+3,Kunjungan,Jam berapa perpustakaan ini mulai buka hari ini?,Jam operasional kami bervariasi. Mohon cek situs web resmi kami atau bagian informasi kontak untuk mengetahui jam buka dan tutup yang spesifik untuk hari ini.
+"4,Peminjaman,Maksimal saya bisa pinjam berapa eksemplar buku?,""Kebijakan hak pinjam bervariasi tergantung jenis keanggotaan Anda. Anggota umum biasanya dapat meminjam 3-5 eksemplar, sementara dosen/staf bisa meminjam lebih banyak."""
+5,Peminjaman,Berapa lama batas waktu peminjaman buku?,Batas waktu peminjaman standar adalah 7 hari (satu minggu) atau 14 hari (dua minggu) per eksemplar. Harap perhatikan tanggal jatuh tempo pada slip pinjam Anda.
+"6,Peminjaman,Bagaimana cara saya memperpanjang masa pinjam buku online?,""Anda dapat melakukan perpanjangan mandiri melalui Katalog Online (OPAC) di situs web kami, selama buku tersebut belum dipesan oleh pemustaka lain. Perpanjangan umumnya hanya bisa dilakukan satu kali."""
+"7,Peminjaman,""Kalau saya telat mengembalikan, dendanya berapa ya?"",""Untuk keterlambatan, Anda akan dikenakan denda sebesar antara Rp 500,- hingga Rp 1.000,- per hari per eksemplar. Denda dihitung sejak tanggal jatuh tempo."""
+"8,Peminjaman,Apa yang harus saya lakukan kalau buku pinjaman saya hilang?,""Anda wajib segera melaporkan kehilangan tersebut ke bagian sirkulasi dan menggantinya dengan buku baru (judul, pengarang, dan edisi yang sama atau edisi terbaru) sesuai ketentuan yang berlaku."""
+9,Layanan/Koleksi,Saya bisa cari koleksi digital atau e-book di mana?,Koleksi digital dan e-book kami dapat diakses melalui portal E-Resources di situs web perpustakaan. Akses mungkin memerlukan login akun anggota Anda.
+"10,Layanan/Fasilitas,Apakah di perpustakaan ada Wi-Fi gratis untuk pengunjung?,""Ya, kami menyediakan layanan Wi-Fi gratis. Anda dapat terhubung menggunakan kredensial yang tersedia di area informasi atau meja layanan."""
+11,Keanggotaan,Apakah pendaftaran anggota memerlukan biaya administrasi?,Pendaftaran anggota untuk perpustakaan umum biasanya gratis.
+"12,Keanggotaan,Dokumen apa yang harus saya siapkan untuk mendaftar anggota?,""Syarat utamanya adalah mengisi formulir pendaftaran, dan membawa kartu identitas yang masih berlaku (KTP/Kartu Pelajar/KTM)."""
+"13,Keanggotaan,""Saya mahasiswa, bagaimana cara buat kartu perpustakaan?"",Syarat utamanya adalah mengisi formulir pendaftaran dan membawa kartu identitas (KTM)."
+14,Keanggotaan,Bagaimana cara perpanjang masa berlaku kartu anggota?,Prosedur perpanjangan kartu dapat dilihat di situs web resmi atau tanyakan di meja informasi.
+15,Kunjungan,Apakah perpustakaan buka di hari Minggu atau hari libur nasional?,Jam operasional kami bervariasi. Mohon cek situs web resmi kami.
+16,Kunjungan,Sampai jam berapa perpustakaan buka?,Jam operasional kami bervariasi. Mohon cek situs web resmi kami atau bagian informasi kontak.
+17,Kunjungan,Jam berapa perpustakaan mulai buka di pagi hari?,Jam operasional kami bervariasi. Mohon cek situs web resmi kami.
+"18,Peminjaman,Berapa batas maksimal buku yang dapat saya pinjam sekaligus?,""Anggota umum biasanya dapat meminjam 3-5 eksemplar, sementara dosen/staf bisa meminjam lebih banyak."""
+"19,Peminjaman,""Saya ingin perpanjang pinjaman buku saya, bagaimana caranya?"",Anda dapat melakukan perpanjangan mandiri melalui Katalog Online (OPAC) di situs web kami."
+"20,Peminjaman,Apakah ada biaya denda untuk keterlambatan pengembalian?,""Anda akan dikenakan denda sebesar antara Rp 500,- hingga Rp 1.000,- per hari per eksemplar."""
+"21,Peminjaman,""Saya kehilangan buku yang dipinjam, apa yang harus saya ganti?"",""Anda wajib segera melaporkan kehilangan tersebut dan menggantinya dengan buku baru (judul, pengarang, dan edisi yang sama)."""
+"22,Peminjaman,""Buku saya sudah jatuh tempo, bagaimana cara membayar dendanya?"",Pembayaran denda dapat dilakukan di bagian sirkulasi."
+23,Peminjaman,Berapa lama waktu pinjam untuk buku fiksi?,Batas waktu peminjaman standar adalah 7 hari atau 14 hari per eksemplar.
+24,Layanan/Koleksi,Di mana saya bisa akses jurnal dan database online?,Koleksi digital dan e-book kami dapat diakses melalui portal E-Resources di situs web perpustakaan.
+25,Layanan/Koleksi,Apakah perpustakaan menyediakan akses ke database berbayar?,Koleksi digital dan e-book kami dapat diakses melalui portal E-Resources di situs web perpustakaan.
+26,Layanan/Koleksi,Bagaimana cara mencari koleksi buku yang ada di rak?,Anda dapat menggunakan Katalog Online (OPAC) atau bertanya di meja informasi.
+"27,Layanan/Fasilitas,""Saya ingin menggunakan internet, apakah tersedia wifi gratis?"",""Ya, kami menyediakan layanan Wi-Fi gratis."""
+"28,Layanan/Fasilitas,Apakah ada ruang belajar kelompok yang bisa saya sewa?,""Ya, kami menyediakan ruang diskusi atau ruang belajar kelompok yang ketersediaannya dapat dicek di meja layanan."""
+29,Layanan/Fasilitas,Di mana lokasi ruang fotokopi atau mesin printer?,Ruang fotokopi dan printer biasanya berada di dekat area koleksi umum atau di lantai dasar.
+"30,Layanan/Fasilitas,Bolehkah saya membawa laptop pribadi ke dalam perpustakaan?,""Ya, Anda diperbolehkan membawa laptop pribadi."""
+31,Layanan/Fasilitas,Apakah ada loker penitipan barang di sini?,Loker penitipan barang tersedia di dekat pintu masuk utama.
+"32,Kunjungan,Bolehkah saya masuk ke perpustakaan tanpa menjadi anggota?,""Kunjungan dan membaca di tempat diperbolehkan, namun Anda tidak bisa meminjam buku."""
+"33,Kunjungan,Apa saja yang tidak boleh dibawa masuk ke perpustakaan?,""Tas besar, makanan, dan minuman biasanya tidak diperbolehkan masuk ke area koleksi."""
+"34,Peminjaman,""Buku saya sudah di reservasi orang lain, apa masih bisa saya perpanjang?"",Perpanjangan tidak bisa dilakukan jika buku sudah direservasi oleh pemustaka lain."
+"35,Peminjaman,""Saya mau pinjam buku, bagaimana prosedurnya?"",""Anda dapat mencari buku melalui OPAC, bawa buku dan kartu anggota ke meja sirkulasi."""
