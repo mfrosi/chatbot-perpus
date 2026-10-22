@@ -7,9 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root { --ink:#1f2a37; --paper:#ffffff; --bg:#f3f5f7; --accent:#2f6f5e; --accent-ink:#ffffff; --bubble:#e8eef0; }
-  @media (prefers-color-scheme: dark) {
-    :root { --ink:#e6edf3; --paper:#1b232c; --bg:#11171d; --accent:#4fa58d; --accent-ink:#0b1410; --bubble:#27323d; }
-  }
   * { box-sizing: border-box; }
   body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); }
   main { max-width:640px; margin:0 auto; padding:48px 20px; }
@@ -18,26 +15,36 @@
   #chat-toggle {
     position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
     border:0; background:var(--accent); color:var(--accent-ink); font-size:24px; cursor:pointer;
-    display: none; /* Disembunyikan sampai CSV selesai dimuat */
+    display: none;
   }
   #chat-box {
-    position:fixed; right:20px; bottom:90px; width:min(340px, calc(100vw - 40px)); max-height:70vh;
+    position:fixed; right:20px; bottom:90px; width:min(340px, calc(100vw - 40px)); height:70vh;
     display:none; flex-direction:column; background:var(--paper); border:1px solid var(--bubble);
     border-radius:14px; overflow:hidden;
   }
   #chat-box.open { display:flex; }
   #chat-head { padding:12px 16px; background:var(--accent); color:var(--accent-ink); font-weight:600; }
-  #chat-log { padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
-  .msg { padding:9px 12px; border-radius:12px; max-width:85%; line-height:1.4; }
+  
+  /* Form Pengisian Data */
+  #auth-screen { padding: 20px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; justify-content: center; }
+  #auth-screen input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+  #auth-screen button { padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+  
+  /* Area Chat (Disembunyikan di awal) */
+  #chat-area { display: none; flex-direction: column; flex-grow: 1; overflow: hidden; }
+  #chat-log { padding:14px; overflow-y:auto; flex-grow: 1; display:flex; flex-direction:column; gap:8px; }
+  .msg { padding:9px 12px; border-radius:12px; max-width:85%; line-height:1.4; font-size: 14px; }
   .bot { background:var(--bubble); align-self:flex-start; }
   .user { background:var(--accent); color:var(--accent-ink); align-self:flex-end; }
-  #chat-options { padding:10px 14px 14px; display:flex; flex-wrap:wrap; gap:8px; }
+  #chat-options { padding:10px 14px 14px; display:flex; flex-wrap:wrap; gap:8px; border-top: 1px solid var(--bubble); }
   #chat-options button {
     border:1px solid var(--accent); background:transparent; color:var(--ink);
-    padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit; text-align: left;
+    padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit; font-size: 13px; text-align: left;
   }
   #chat-options button:hover { background:var(--accent); color:var(--accent-ink); }
-  :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  
+  /* Rating Bintang */
+  .rating-btn { font-size: 20px !important; padding: 4px 8px !important; }
 </style>
 </head>
 <body>
@@ -47,76 +54,96 @@
   <p id="status-text">Mempersiapkan data FAQ...</p>
 </main>
 
-<button id="chat-toggle" aria-label="Buka chatbot">💬</button>
-<section id="chat-box" aria-live="polite">
+<button id="chat-toggle">💬</button>
+<section id="chat-box">
   <div id="chat-head">Asisten Perpustakaan</div>
-  <div id="chat-log"></div>
-  <div id="chat-options"></div>
+  
+  <!-- Layar Pengisian Data Diri -->
+  <div id="auth-screen">
+    <p style="margin-top:0; font-size:14px; text-align:center;">Silakan isi data diri sebelum memulai obrolan.</p>
+    <input type="text" id="input-nama" placeholder="Nama Lengkap" required>
+    <input type="text" id="input-prodi" placeholder="Program Studi" required>
+    <button id="btn-mulai">Mulai Obrolan</button>
+  </div>
+
+  <!-- Layar Chat Utama -->
+  <div id="chat-area">
+    <div id="chat-log"></div>
+    <div id="chat-options"></div>
+  </div>
 </section>
 
 <script>
+  // GANTI TEKS DI BAWAH INI DENGAN URL DARI GOOGLE APPS SCRIPT KAMU
+  const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbx-6Yvw_exsElKxdmZE_VtNrmxZ6Cdm2g967ShEL_ZLhjviQ-pjOVCoxSBf2HDGzNnv/exec";
+
+  let dataUser = { nama: "", prodi: "" };
   let menu = {
-    start: {
-      text: "Halo! Selamat datang di layanan informasi UPT Perpustakaan Universitas Wiraraja. Silakan pilih kategori pertanyaan:",
-      options: []
-    },
-    "Menu utama": {
-      text: "Kembali ke menu utama. Silakan pilih kategori:",
-      options: []
-    }
+    start: { text: "Halo! Selamat datang di layanan informasi UPT Perpustakaan Universitas Wiraraja. Silakan pilih kategori pertanyaan:", options: [] },
+    "Menu utama": { text: "Kembali ke menu utama. Silakan pilih kategori:", options: [] }
   };
 
   const statusText = document.getElementById("status-text");
   const box = document.getElementById("chat-box");
+  const toggle = document.getElementById("chat-toggle");
+  
+  const authScreen = document.getElementById("auth-screen");
+  const chatArea = document.getElementById("chat-area");
+  const btnMulai = document.getElementById("btn-mulai");
+  const inputNama = document.getElementById("input-nama");
+  const inputProdi = document.getElementById("input-prodi");
+
   const log = document.getElementById("chat-log");
   const opts = document.getElementById("chat-options");
-  const toggle = document.getElementById("chat-toggle");
 
-  // Membaca file CSV secara otomatis
+  // Load CSV
   Papa.parse("perpustakaan_faq.csv", {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
+    download: true, header: true, skipEmptyLines: true,
     complete: function(results) {
       const data = results.data;
       const kategoriSet = new Set();
-      
-      // Mengumpulkan semua kategori yang valid
-      data.forEach(row => {
-        if(row.kategori && row.user_query && row.chatbot_response) {
-          kategoriSet.add(row.kategori);
-        }
-      });
+      data.forEach(row => { if(row.kategori) kategoriSet.add(row.kategori); });
 
       const kategoriArr = Array.from(kategoriSet);
-      menu["start"].options = kategoriArr;
-      menu["Menu utama"].options = kategoriArr;
+      // Tambahkan tombol Akhiri Obrolan di menu utama
+      menu["start"].options = [...kategoriArr, "Akhiri Obrolan & Beri Rating"];
+      menu["Menu utama"].options = [...kategoriArr, "Akhiri Obrolan & Beri Rating"];
 
-      // Membuat cabang menu untuk setiap kategori dan pertanyaan
       kategoriArr.forEach(kat => {
         const pertanyaanList = data.filter(r => r.kategori === kat).map(r => r.user_query);
         menu[kat] = { 
           text: "Pilih pertanyaan terkait " + kat + ":", 
-          options: [...pertanyaanList, "Menu utama"] 
+          options: [...pertanyaanList, "Menu utama", "Akhiri Obrolan & Beri Rating"] 
         };
         
         data.filter(r => r.kategori === kat).forEach(r => {
           menu[r.user_query] = { 
             text: r.chatbot_response, 
-            options: ["Kembali ke " + kat, "Menu utama"] 
+            options: ["Kembali ke " + kat, "Menu utama", "Akhiri Obrolan & Beri Rating"] 
           };
-          // Buat jembatan rute "Kembali ke [Kategori]"
           menu["Kembali ke " + kat] = menu[kat];
         });
       });
-      
       statusText.innerText = "Sistem siap. Klik tombol 💬 di pojok kanan bawah.";
-      toggle.style.display = "block"; // Munculkan tombol chat
-    },
-    error: function() {
-      statusText.innerText = "Gagal memuat data CSV. Pastikan file perpustakaan_faq.csv berada di folder yang sama.";
+      toggle.style.display = "block";
     }
   });
+
+  // Logika Mulai Chat
+  btnMulai.onclick = () => {
+    if(inputNama.value.trim() === "" || inputProdi.value.trim() === "") {
+      alert("Harap isi Nama dan Program Studi terlebih dahulu!");
+      return;
+    }
+    dataUser.nama = inputNama.value.trim();
+    dataUser.prodi = inputProdi.value.trim();
+    
+    authScreen.style.display = "none";
+    chatArea.style.display = "flex";
+    show("start");
+  };
+
+  toggle.onclick = () => { box.classList.toggle("open"); };
 
   function addMsg(text, who) {
     const el = document.createElement("div");
@@ -127,6 +154,11 @@
   }
 
   function show(key) {
+    if (key === "Akhiri Obrolan & Beri Rating") {
+      tampilkanRating();
+      return;
+    }
+
     const node = menu[key];
     if (!node) return;
     addMsg(node.text, "bot");
@@ -142,14 +174,43 @@
     });
   }
 
-  let started = false;
-  toggle.onclick = () => {
-    box.classList.toggle("open");
-    if (!started) { 
-        started = true; 
-        show("start"); 
-    }
-  };
+  function tampilkanRating() {
+    addMsg("Seberapa puas Anda dengan jawaban Chatbot ini? (1=Sangat Buruk, 5=Sangat Baik)", "bot");
+    opts.innerHTML = "";
+    const ratings = ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"];
+    
+    ratings.forEach((stars, index) => {
+      const b = document.createElement("button");
+      b.className = "rating-btn";
+      b.textContent = stars;
+      b.onclick = () => {
+        const ratingAngka = index + 1;
+        addMsg(stars, "user");
+        kirimDataKeGoogle(ratingAngka);
+      };
+      opts.appendChild(b);
+    });
+  }
+
+  function kirimDataKeGoogle(rating) {
+    opts.innerHTML = ""; // Kosongkan opsi agar tidak bisa diklik dua kali
+    addMsg("Sedang menyimpan data kunjunganmu...", "bot");
+    
+    fetch(GOOGLE_APP_URL, {
+      method: "POST",
+      // text/plain digunakan untuk menghindari error CORS bawaan browser
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        nama: dataUser.nama,
+        prodi: dataUser.prodi,
+        rating: rating
+      })
+    }).then(response => {
+      addMsg("Terima kasih! Penilaianmu sudah tersimpan untuk peningkatan layanan perpustakaan kami. Sampai jumpa!", "bot");
+    }).catch(error => {
+      addMsg("Terima kasih atas penilaiannya!", "bot");
+    });
+  }
 </script>
 </body>
 </html>
