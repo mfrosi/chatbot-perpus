@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chatbot Perpustakaan Wiraraja</title>
+<title>Chatbot Perpustakaan</title>
 <style>
   :root { --ink:#1f2a37; --paper:#ffffff; --bg:#f3f5f7; --accent:#2f6f5e; --accent-ink:#ffffff; --bubble:#e8eef0; --star:#e0a100; --star-off:#b9c2c8; }
   @media (prefers-color-scheme: dark) {
@@ -29,10 +29,15 @@
   .user { background:var(--accent); color:var(--accent-ink); align-self:flex-end; }
   .related { font-size:.85rem; opacity:.75; margin-top:6px; }
   .rating { background:var(--bubble); align-self:flex-start; padding:12px; border-radius:12px; }
-  .stars { display:flex; gap:2px; margin-top:6px; }
+  .rating { display:flex; flex-direction:column; gap:8px; width:88%; }
+  .rating .fld { padding:8px 10px; border-radius:8px; border:1px solid var(--star-off); background:var(--paper); color:var(--ink); font:inherit; width:100%; }
+  .rating .lbl { font-size:.85rem; opacity:.8; }
+  .rating .err { color:#c0392b; font-size:.85rem; min-height:0; }
+  .rating .submit { align-self:flex-start; border:0; background:var(--accent); color:var(--accent-ink); padding:8px 16px; border-radius:999px; cursor:pointer; font:inherit; }
+  .rating .submit:disabled { opacity:.5; cursor:default; }
+  .stars { display:flex; gap:2px; }
   .stars button { background:none; border:0; font-size:30px; line-height:1; cursor:pointer; color:var(--star-off); padding:0 2px; }
   .stars button.on { color:var(--star); }
-  .stars.done button { cursor:default; }
   #chat-form { display:flex; gap:8px; padding:10px 14px; border-top:1px solid var(--bubble); }
   #chat-input { flex:1; padding:8px 12px; border-radius:999px; border:1px solid var(--bubble);
     background:var(--bg); color:var(--ink); font:inherit; min-width:0; }
@@ -43,7 +48,7 @@
 <body>
 
 <main>
-  <h1>Halaman Uji Coba Chatbot Perpustakaan Universitas Wiraraja</h1>
+  <h1>Halaman Uji Coba Chatbot Perpustakaan</h1>
   <p>Klik tombol bulat di pojok kanan bawah, lalu ketik pertanyaanmu.</p>
 </main>
 
@@ -296,45 +301,56 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  // ---------- Rating bintang ----------
+  // ---------- Rating bintang + data responden ----------
   let rated = false;
+  const LABELS = ["Sangat buruk", "Kurang baik", "Cukup", "Baik", "Sangat baik"];
+
   function showRating() {
     if (rated || document.querySelector(".rating")) return;
-    const wrap = document.createElement("div");
+    const wrap = document.createElement("form");
     wrap.className = "rating";
-    wrap.innerHTML = "<div>Terima kasih sudah bertanya! Bagaimana layanan kami?</div>";
-    const stars = document.createElement("div");
-    stars.className = "stars";
-    const labels = ["Sangat buruk", "Kurang baik", "Cukup", "Baik", "Sangat baik"];
+    wrap.innerHTML =
+      '<div>Terima kasih sudah bertanya! Mohon isi data singkat dan nilai layanan kami.</div>' +
+      '<input class="fld" name="nama" type="text" placeholder="Nama" autocomplete="name" maxlength="80" required>' +
+      '<input class="fld" name="prodi" type="text" placeholder="Program studi" maxlength="80" required>' +
+      '<div class="lbl">Rating layanan</div>' +
+      '<div class="stars"></div>' +
+      '<div class="err" role="alert"></div>' +
+      '<button class="submit" type="submit">Kirim</button>';
+    const stars = wrap.querySelector(".stars");
+    const err = wrap.querySelector(".err");
+    let value = 0;
+    function paint(n) { [...stars.children].forEach((x, idx) => x.classList.toggle("on", idx < n)); }
     for (let i = 1; i <= 5; i++) {
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = "★";
-      b.setAttribute("aria-label", i + " bintang: " + labels[i - 1]);
-      b.onmouseenter = () => !rated && paint(i);
-      b.onfocus = () => !rated && paint(i);
-      b.onclick = () => submitRating(i, stars);
+      b.setAttribute("aria-label", i + " bintang: " + LABELS[i - 1]);
+      b.onmouseenter = () => paint(i);
+      b.onclick = () => { value = i; paint(i); err.textContent = ""; };
       stars.appendChild(b);
     }
-    stars.onmouseleave = () => !rated && paint(0);
-    function paint(n) { [...stars.children].forEach((s, idx) => s.classList.toggle("on", idx < n)); }
-    stars._paint = paint;
-    wrap.appendChild(stars);
+    stars.onmouseleave = () => paint(value);
+    wrap.onsubmit = e => {
+      e.preventDefault();
+      const nama = wrap.querySelector("[name=nama]").value.trim();
+      const prodi = wrap.querySelector("[name=prodi]").value.trim();
+      if (!nama || !prodi) { err.textContent = "Nama dan program studi wajib diisi."; return; }
+      if (!value) { err.textContent = "Pilih jumlah bintang dulu."; return; }
+      submitRating({ nama, prodi, rating: value }, wrap);
+    };
     log.appendChild(wrap);
     log.scrollTop = log.scrollHeight;
   }
 
-  function submitRating(n, stars) {
+  function submitRating(data, wrap) {
     rated = true;
-    stars.classList.add("done");
-    stars._paint(n);
-    [...stars.children].forEach(b => b.disabled = true);
-    const payload = { rating: n, waktu: new Date().toISOString() };
-    try { localStorage.setItem("rating_terakhir", JSON.stringify(payload)); } catch (e) {}
+    wrap.querySelectorAll("input, button").forEach(el => el.disabled = true);
+    const payload = { ...data, waktu: new Date().toISOString() };
     if (RATING_ENDPOINT) {
       fetch(RATING_ENDPOINT, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) }).catch(() => {});
     }
-    addMsg("Terima kasih! Kamu memberi " + n + " dari 5 bintang. ⭐", "bot");
+    addMsg("Terima kasih, " + data.nama + "! Kamu memberi " + data.rating + " dari 5 bintang. ⭐", "bot");
   }
 
   // ---------- Percakapan ----------
