@@ -99,7 +99,7 @@
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   // Menggunakan model flash yang cepat dan mendukung teks+gambar
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
   let dataUser = { nama: "", prodi: "" };
   let systemInstruction = "Kamu adalah asisten resmi UPT Perpustakaan Universitas Wiraraja (UNIJA). Jawablah dengan ramah, gunakan bahasa Indonesia yang baik. Jawab hanya berdasarkan panduan FAQ berikut ini:\n\n";
