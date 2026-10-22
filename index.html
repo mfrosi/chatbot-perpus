@@ -29,6 +29,13 @@
   .user { background:var(--accent); color:var(--accent-ink); align-self:flex-end; }
   .related { font-size:.85rem; opacity:.75; margin-top:6px; }
   .rating { background:var(--bubble); align-self:flex-start; padding:12px; border-radius:12px; }
+  #start-form { padding:18px 16px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; }
+  #start-form p { margin:0 0 4px; line-height:1.4; }
+  #start-form label { font-size:.85rem; opacity:.8; }
+  #start-form input { padding:8px 10px; border-radius:8px; border:1px solid var(--star-off); background:var(--paper); color:var(--ink); font:inherit; width:100%; }
+  #start-form .err { color:#c0392b; font-size:.85rem; }
+  #start-form .submit { align-self:flex-start; margin-top:4px; border:0; background:var(--accent); color:var(--accent-ink); padding:8px 16px; border-radius:999px; cursor:pointer; font:inherit; }
+  [hidden] { display:none !important; }
   .rating { display:flex; flex-direction:column; gap:8px; width:88%; }
   .rating .fld { padding:8px 10px; border-radius:8px; border:1px solid var(--star-off); background:var(--paper); color:var(--ink); font:inherit; width:100%; }
   .rating .lbl { font-size:.85rem; opacity:.8; }
@@ -54,9 +61,18 @@
 
 <button id="chat-toggle" aria-label="Buka chatbot">💬</button>
 <section id="chat-box" aria-live="polite">
-  <div id="chat-head"><strong>Asisten Perpustakaan</strong><button id="end-chat" type="button">Akhiri chat</button></div>
-  <div id="chat-log"></div>
-  <form id="chat-form">
+  <div id="chat-head"><strong>Asisten Perpustakaan</strong><button id="end-chat" type="button" hidden>Akhiri chat</button></div>
+  <form id="start-form">
+    <p>Sebelum mulai, isi data singkat ini ya. Data dipakai untuk evaluasi layanan perpustakaan.</p>
+    <label for="f-nama">Nama</label>
+    <input id="f-nama" name="nama" type="text" autocomplete="name" maxlength="80" required>
+    <label for="f-prodi">Program studi</label>
+    <input id="f-prodi" name="prodi" type="text" maxlength="80" required>
+    <div class="err" id="start-err" role="alert"></div>
+    <button class="submit" type="submit">Mulai chat</button>
+  </form>
+  <div id="chat-log" hidden></div>
+  <form id="chat-form" hidden>
     <input id="chat-input" type="text" placeholder="Ketik pertanyaanmu di sini..." autocomplete="off" aria-label="Pertanyaan">
     <button id="chat-send" type="submit">Kirim</button>
   </form>
@@ -302,6 +318,7 @@
   }
 
   // ---------- Rating bintang + data responden ----------
+  let user = null;   // diisi dari form awal
   let rated = false;
   const LABELS = ["Sangat buruk", "Kurang baik", "Cukup", "Baik", "Sangat baik"];
 
@@ -310,10 +327,7 @@
     const wrap = document.createElement("form");
     wrap.className = "rating";
     wrap.innerHTML =
-      '<div>Terima kasih sudah bertanya! Mohon isi data singkat dan nilai layanan kami.</div>' +
-      '<input class="fld" name="nama" type="text" placeholder="Nama" autocomplete="name" maxlength="80" required>' +
-      '<input class="fld" name="prodi" type="text" placeholder="Program studi" maxlength="80" required>' +
-      '<div class="lbl">Rating layanan</div>' +
+      '<div>Terima kasih sudah bertanya, ' + user.nama + '! Bagaimana penilaianmu untuk layanan kami?</div>' +
       '<div class="stars"></div>' +
       '<div class="err" role="alert"></div>' +
       '<button class="submit" type="submit">Kirim</button>';
@@ -333,11 +347,8 @@
     stars.onmouseleave = () => paint(value);
     wrap.onsubmit = e => {
       e.preventDefault();
-      const nama = wrap.querySelector("[name=nama]").value.trim();
-      const prodi = wrap.querySelector("[name=prodi]").value.trim();
-      if (!nama || !prodi) { err.textContent = "Nama dan program studi wajib diisi."; return; }
       if (!value) { err.textContent = "Pilih jumlah bintang dulu."; return; }
-      submitRating({ nama, prodi, rating: value }, wrap);
+      submitRating({ nama: user.nama, prodi: user.prodi, rating: value }, wrap);
     };
     log.appendChild(wrap);
     log.scrollTop = log.scrollHeight;
@@ -389,13 +400,30 @@
   };
 
   let started = false;
+
+  document.getElementById("start-form").onsubmit = e => {
+    e.preventDefault();
+    const nama = document.getElementById("f-nama").value.trim();
+    const prodi = document.getElementById("f-prodi").value.trim();
+    if (!nama || !prodi) {
+      document.getElementById("start-err").textContent = "Nama dan program studi wajib diisi.";
+      return;
+    }
+    user = { nama, prodi };
+    started = true;
+    document.getElementById("start-form").hidden = true;
+    log.hidden = false;
+    document.getElementById("chat-form").hidden = false;
+    document.getElementById("end-chat").hidden = false;
+    addMsg("Halo, " + nama + "! Aku asisten perpustakaan. Ketik pertanyaanmu, misalnya: \"cara daftar anggota\" atau \"denda telat berapa?\"", "bot");
+    input.focus();
+  };
+
   document.getElementById("chat-toggle").onclick = () => {
     box.classList.toggle("open");
-    if (!started) {
-      started = true;
-      addMsg("Halo! Aku asisten perpustakaan. Ketik pertanyaanmu, misalnya: \"cara daftar anggota\" atau \"denda telat berapa?\"", "bot");
+    if (box.classList.contains("open")) {
+      (started ? input : document.getElementById("f-nama")).focus();
     }
-    if (box.classList.contains("open")) input.focus();
   };
 </script>
 </body>
