@@ -112,8 +112,14 @@
       
       // Pengaturan logika pencarian
       fuseInstance = new Fuse(faqData, {
-        keys: ["user_query", "kategori", "chatbot_response"],
-        threshold: 0.4 // Toleransi kemiripan kalimat
+        keys: [
+          { name: "user_query", weight: 0.7 },
+          { name: "kategori", weight: 0.2 },
+          { name: "chatbot_response", weight: 0.1 }
+        ],
+        threshold: 0.5, // Lebih toleran terhadap sinonim/typo
+        ignoreLocation: true, // Membaca kata di mana pun posisinya dalam kalimat
+        findAllMatches: true
       });
 
       statusText.innerText = "Sistem siap digunakan!";
