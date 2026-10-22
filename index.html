@@ -368,11 +368,48 @@
   const CLOSING = /^(terima ?kasih|makasih|thanks|thx|sudah|udah|cukup|selesai|tidak|nggak|gak|ga|oke|ok|siap)\b/i;
 
   function reply(text) {
+    async function reply(text) {
     if (CLOSING.test(text) && text.split(/\s+/).length <= 4) {
       addMsg("Sama-sama! Senang bisa membantu.", "bot");
       showRating();
       return;
     }
+
+    // Menampilkan pesan loading sementara
+    addMsg("Sedang mencari jawaban...", "bot");
+    
+    try {
+      // Dapatkan kunci ini secara gratis dari Google AI Studio
+      const API_KEY = "MASUKKAN_API_KEY_GEMINI_MILIKMU_DISINI"; 
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+      // Memberi instruksi khusus agar AI bertindak sebagai pustakawan yang relevan
+      const systemInstruction = "Kamu adalah asisten UPT Perpustakaan Universitas Wiraraja. Jawab pertanyaan pemustaka dengan ramah, singkat, dan berbahasa Indonesia.";
+      const promptText = `${systemInstruction}\n\nPertanyaan pengguna: ${text}`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: promptText }] }]
+        })
+      });
+
+      const data = await response.json();
+      const aiAnswer = data.candidates[0].content.parts[0].text;
+
+      // Hapus pesan loading
+      log.lastChild.remove(); 
+      
+      // Tampilkan jawaban dari AI
+      addMsg(aiAnswer, "bot");
+      addMsg("Ada pertanyaan lain? Kalau sudah cukup, ketik \"terima kasih\" atau tekan Akhiri chat.", "bot");
+
+    } catch (error) {
+      log.lastChild.remove();
+      addMsg("Maaf, koneksi ke sistem AI sedang gangguan. Silakan coba lagi nanti.", "bot");
+    }
+  }
     const res = search(text);
     if (!res.length) {
       addMsg("Maaf, aku belum menemukan jawaban untuk itu. Coba tulis dengan kata lain, misalnya tentang pendaftaran anggota, peminjaman, denda, jam buka, atau fasilitas. Atau tanyakan langsung ke meja informasi perpustakaan.", "bot");
