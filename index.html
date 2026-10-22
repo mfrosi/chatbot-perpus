@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chatbot Perpustakaan</title>
+<title>Chatbot Perpustakaan Wiraraja</title>
 <style>
-  :root { --ink:#1f2a37; --paper:#ffffff; --bg:#f3f5f7; --accent:#2f6f5e; --accent-ink:#ffffff; --bubble:#e8eef0; }
+  :root { --ink:#1f2a37; --paper:#ffffff; --bg:#f3f5f7; --accent:#2f6f5e; --accent-ink:#ffffff; --bubble:#e8eef0; --star:#e0a100; --star-off:#b9c2c8; }
   @media (prefers-color-scheme: dark) {
-    :root { --ink:#e6edf3; --paper:#1b232c; --bg:#11171d; --accent:#4fa58d; --accent-ink:#0b1410; --bubble:#27323d; }
+    :root { --ink:#e6edf3; --paper:#1b232c; --bg:#11171d; --accent:#4fa58d; --accent-ink:#0b1410; --bubble:#27323d; --star:#f2b81c; --star-off:#4a5662; }
   }
   * { box-sizing: border-box; }
   body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); }
@@ -16,22 +16,26 @@
 
   #chat-toggle { position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
     border:0; background:var(--accent); color:var(--accent-ink); font-size:24px; cursor:pointer; }
-  #chat-box { position:fixed; right:20px; bottom:90px; width:min(360px, calc(100vw - 40px)); height:min(540px, 75vh);
+  #chat-box { position:fixed; right:20px; bottom:90px; width:min(360px, calc(100vw - 40px)); height:min(520px, 75vh);
     display:none; flex-direction:column; background:var(--paper); border:1px solid var(--bubble);
     border-radius:14px; overflow:hidden; }
   #chat-box.open { display:flex; }
-  #chat-head { padding:12px 16px; background:var(--accent); color:var(--accent-ink); font-weight:600; }
+  #chat-head { padding:12px 16px; background:var(--accent); color:var(--accent-ink); display:flex; justify-content:space-between; align-items:center; }
+  #chat-head strong { font-weight:600; }
+  #end-chat { background:none; border:1px solid var(--accent-ink); color:var(--accent-ink); border-radius:999px; padding:3px 10px; font:inherit; font-size:.8rem; cursor:pointer; }
   #chat-log { padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; flex:1; }
-  .msg { padding:9px 12px; border-radius:12px; max-width:88%; line-height:1.4; }
+  .msg { padding:9px 12px; border-radius:12px; max-width:88%; line-height:1.4; white-space:pre-line; }
   .bot { background:var(--bubble); align-self:flex-start; }
   .user { background:var(--accent); color:var(--accent-ink); align-self:flex-end; }
-  #chat-options { padding:8px 14px; display:flex; flex-wrap:wrap; gap:8px; max-height:35%; overflow-y:auto; border-top:1px solid var(--bubble); }
-  #chat-options button { border:1px solid var(--accent); background:transparent; color:var(--ink);
-    padding:7px 12px; border-radius:14px; cursor:pointer; font:inherit; font-size:.9rem; text-align:left; }
-  #chat-options button:hover { background:var(--accent); color:var(--accent-ink); }
+  .related { font-size:.85rem; opacity:.75; margin-top:6px; }
+  .rating { background:var(--bubble); align-self:flex-start; padding:12px; border-radius:12px; }
+  .stars { display:flex; gap:2px; margin-top:6px; }
+  .stars button { background:none; border:0; font-size:30px; line-height:1; cursor:pointer; color:var(--star-off); padding:0 2px; }
+  .stars button.on { color:var(--star); }
+  .stars.done button { cursor:default; }
   #chat-form { display:flex; gap:8px; padding:10px 14px; border-top:1px solid var(--bubble); }
   #chat-input { flex:1; padding:8px 12px; border-radius:999px; border:1px solid var(--bubble);
-    background:var(--bg); color:var(--ink); font:inherit; }
+    background:var(--bg); color:var(--ink); font:inherit; min-width:0; }
   #chat-send { border:0; background:var(--accent); color:var(--accent-ink); padding:8px 14px; border-radius:999px; cursor:pointer; font:inherit; }
   :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 </style>
@@ -39,17 +43,16 @@
 <body>
 
 <main>
-  <h1>Halaman Uji Coba Chatbot Perpustakaan</h1>
-  <p>Klik tombol bulat di pojok kanan bawah. Kamu bisa pilih menu atau mengetik pertanyaan.</p>
+  <h1>Halaman Uji Coba Chatbot Perpustakaan Universitas Wiraraja</h1>
+  <p>Klik tombol bulat di pojok kanan bawah, lalu ketik pertanyaanmu.</p>
 </main>
 
 <button id="chat-toggle" aria-label="Buka chatbot">💬</button>
 <section id="chat-box" aria-live="polite">
-  <div id="chat-head">Asisten Perpustakaan</div>
+  <div id="chat-head"><strong>Asisten Perpustakaan</strong><button id="end-chat" type="button">Akhiri chat</button></div>
   <div id="chat-log"></div>
-  <div id="chat-options"></div>
   <form id="chat-form">
-    <input id="chat-input" type="text" placeholder="Ketik pertanyaanmu..." autocomplete="off" aria-label="Pertanyaan">
+    <input id="chat-input" type="text" placeholder="Ketik pertanyaanmu di sini..." autocomplete="off" aria-label="Pertanyaan">
     <button id="chat-send" type="submit">Kirim</button>
   </form>
 </section>
@@ -236,58 +239,122 @@
 ];
   // ==========================================================
 
+  // Isi dengan URL Google Apps Script kalau rating mau dikumpulkan (lihat penjelasan). Kosongkan kalau belum.
+  const RATING_ENDPOINT = "";
+
   const log = document.getElementById("chat-log");
-  const opts = document.getElementById("chat-options");
   const box = document.getElementById("chat-box");
   const input = document.getElementById("chat-input");
-  const categories = [...new Set(FAQ.map(f => f.k))];
 
-  const STOP = new Set("apa apakah bagaimana berapa kapan dimana di mana yang dan atau saya aku ini itu ada bisa dapat boleh untuk dengan dari ke jika kalau mau ingin cara ya kah lah nya pada akan sudah masih bolehkah".split(" "));
-  const tokens = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w && !STOP.has(w));
+  // Kata umum yang diabaikan saat mencocokkan
+  const STOP = new Set("apa apakah bagaimana berapa kapan dimana di mana yang dan atau saya aku ini itu ada bisa dapat boleh bolehkah untuk dengan dari ke jika kalau mau ingin cara ya kah lah nya pada akan sudah masih sih dong deh kak min tolong mohon gak nggak ngga enggak".split(" "));
+  // Padanan kata (bahasa sehari-hari -> kata di FAQ)
+  const SYN = { telat:"terlambat", ebook:"book", ngembaliin:"mengembalikan", balikin:"mengembalikan",
+    minjem:"pinjam", pinjem:"pinjam", meminjam:"pinjam", peminjaman:"pinjam", pinjaman:"pinjam", dipinjam:"pinjam",
+    ngembalikan:"mengembalikan", kembalikan:"mengembalikan", jam:"jam", buka:"buka", tutup:"buka", operasional:"buka",
+    daftar:"pendaftaran", mendaftar:"pendaftaran", registrasi:"pendaftaran", kartu:"kartu", ktm:"kartu", member:"anggota", keanggotaan:"anggota",
+    perpanjang:"perpanjang", memperpanjang:"perpanjang", extend:"perpanjang", };
 
-  function addMsg(text, who) {
-    const el = document.createElement("div");
-    el.className = "msg " + who;
-    el.textContent = text;
-    log.appendChild(el);
-    log.scrollTop = log.scrollHeight;
+  // Penghilang imbuhan sederhana: membawa -> bawa, mengembalikan -> kembali
+  function stem(w) {
+    let x = w.replace(/(nya|kan|lah|kah|an|i)$/, m => (w.length - m.length >= 4 ? "" : m));
+    const p = /^(meng|meny|men|mem|me|peng|pen|pem|per|pe|ber|ter|di|ke)/.exec(x);
+    if (p && x.length - p[0].length >= 4) x = x.slice(p[0].length);
+    return x;
   }
+  const tokens = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter(w => w && !STOP.has(w)).map(w => stem(SYN[w] || w));
 
-  function setOptions(items) {
-    opts.innerHTML = "";
-    items.forEach(([label, fn]) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.onclick = () => { addMsg(label, "user"); fn(); };
-      opts.appendChild(b);
-    });
-  }
+  // Kata tambahan yang memberi nilai plus (bukan syarat) agar jawaban lebih tepat
+  const BONUS = { daftar: ["syarat", "dokumen"], pendaftaran: ["syarat", "dokumen"] };
 
-  function showMain() {
-    addMsg("Halo! Pilih topik di bawah, atau ketik pertanyaanmu.", "bot");
-    setOptions(categories.map(c => [c, () => showCategory(c)]));
-  }
-
-  function showCategory(cat) {
-    addMsg("Pertanyaan seputar " + cat + ":", "bot");
-    const list = FAQ.filter(f => f.k === cat).map(f => [f.q, () => showAnswer(f, cat)]);
-    list.push(["Menu utama", showMain]);
-    setOptions(list);
-  }
-
-  function showAnswer(f, cat) {
-    addMsg(f.a, "bot");
-    setOptions([["Pertanyaan lain: " + f.k, () => showCategory(f.k)], ["Menu utama", showMain]]);
-  }
+  const indexed = FAQ.map(f => ({ f, t: new Set(tokens(f.q)), ta: new Set(tokens(f.a)) }));
 
   function search(text) {
     const qt = tokens(text);
     if (!qt.length) return [];
-    return FAQ.map(f => {
-      const ft = new Set(tokens(f.q + " " + f.k));
-      const hit = qt.filter(w => ft.has(w) || [...ft].some(x => x.length > 3 && (x.startsWith(w) || w.startsWith(x)))).length;
-      return { f, score: hit / qt.length };
-    }).filter(r => r.score >= 0.5).sort((a, b) => b.score - a.score);
+    const extra = qt.flatMap(w => (BONUS[w] || []).map(stem));
+    return indexed.map(({ f, t, ta }) => {
+      // cocok di pertanyaan = 1 poin, cocok hanya di jawaban = 0,5 poin
+      const hit = qt.reduce((n, w) => n + (t.has(w) ? 1 : ta.has(w) ? 0.5 : 0), 0);
+      const bonus = extra.filter(w => t.has(w)).length * 0.1;
+      return { f, score: hit / qt.length, hit, rank: hit / qt.length + bonus };
+    }).filter(r => r.hit > 0 && r.score >= 0.6).sort((a, b) => b.rank - a.rank || b.hit - a.hit);
+  }
+
+  function addMsg(text, who, related) {
+    const el = document.createElement("div");
+    el.className = "msg " + who;
+    el.textContent = text;
+    if (related) {
+      const r = document.createElement("div");
+      r.className = "related";
+      r.textContent = related;
+      el.appendChild(r);
+    }
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // ---------- Rating bintang ----------
+  let rated = false;
+  function showRating() {
+    if (rated || document.querySelector(".rating")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "rating";
+    wrap.innerHTML = "<div>Terima kasih sudah bertanya! Bagaimana layanan kami?</div>";
+    const stars = document.createElement("div");
+    stars.className = "stars";
+    const labels = ["Sangat buruk", "Kurang baik", "Cukup", "Baik", "Sangat baik"];
+    for (let i = 1; i <= 5; i++) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "★";
+      b.setAttribute("aria-label", i + " bintang: " + labels[i - 1]);
+      b.onmouseenter = () => !rated && paint(i);
+      b.onfocus = () => !rated && paint(i);
+      b.onclick = () => submitRating(i, stars);
+      stars.appendChild(b);
+    }
+    stars.onmouseleave = () => !rated && paint(0);
+    function paint(n) { [...stars.children].forEach((s, idx) => s.classList.toggle("on", idx < n)); }
+    stars._paint = paint;
+    wrap.appendChild(stars);
+    log.appendChild(wrap);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function submitRating(n, stars) {
+    rated = true;
+    stars.classList.add("done");
+    stars._paint(n);
+    [...stars.children].forEach(b => b.disabled = true);
+    const payload = { rating: n, waktu: new Date().toISOString() };
+    try { localStorage.setItem("rating_terakhir", JSON.stringify(payload)); } catch (e) {}
+    if (RATING_ENDPOINT) {
+      fetch(RATING_ENDPOINT, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) }).catch(() => {});
+    }
+    addMsg("Terima kasih! Kamu memberi " + n + " dari 5 bintang. ⭐", "bot");
+  }
+
+  // ---------- Percakapan ----------
+  const CLOSING = /^(terima ?kasih|makasih|thanks|thx|sudah|udah|cukup|selesai|tidak|nggak|gak|ga|oke|ok|siap)\b/i;
+
+  function reply(text) {
+    if (CLOSING.test(text) && text.split(/\s+/).length <= 4) {
+      addMsg("Sama-sama! Senang bisa membantu.", "bot");
+      showRating();
+      return;
+    }
+    const res = search(text);
+    if (!res.length) {
+      addMsg("Maaf, aku belum menemukan jawaban untuk itu. Coba tulis dengan kata lain, misalnya tentang pendaftaran anggota, peminjaman, denda, jam buka, atau fasilitas. Atau tanyakan langsung ke meja informasi perpustakaan.", "bot");
+      return;
+    }
+    const top = res[0];
+    const related = res.slice(1, 3).filter(r => r.f.a !== top.f.a).map(r => r.f.q);
+    addMsg(top.f.a, "bot", related.length ? "Pertanyaan terkait: " + related.join(" • ") : "");
+    addMsg("Ada pertanyaan lain? Kalau sudah cukup, ketik \"terima kasih\" atau tekan Akhiri chat.", "bot");
   }
 
   document.getElementById("chat-form").onsubmit = e => {
@@ -296,24 +363,23 @@
     if (!text) return;
     input.value = "";
     addMsg(text, "user");
-    const res = search(text);
-    if (!res.length) {
-      addMsg("Maaf, aku belum menemukan jawaban untuk itu. Coba pilih topik di bawah.", "bot");
-      setOptions(categories.map(c => [c, () => showCategory(c)]));
-    } else if (res[0].score >= 0.8 || res.length === 1) {
-      showAnswer(res[0].f);
-    } else {
-      addMsg("Apakah salah satu ini yang kamu maksud?", "bot");
-      const items = res.slice(0, 4).map(r => [r.f.q, () => showAnswer(r.f)]);
-      items.push(["Menu utama", showMain]);
-      setOptions(items);
-    }
+    reply(text);
+  };
+
+  document.getElementById("end-chat").onclick = () => {
+    if (!started) return;
+    addMsg("Chat diakhiri.", "bot");
+    showRating();
   };
 
   let started = false;
   document.getElementById("chat-toggle").onclick = () => {
     box.classList.toggle("open");
-    if (!started) { started = true; showMain(); }
+    if (!started) {
+      started = true;
+      addMsg("Halo! Aku asisten perpustakaan. Ketik pertanyaanmu, misalnya: \"cara daftar anggota\" atau \"denda telat berapa?\"", "bot");
+    }
+    if (box.classList.contains("open")) input.focus();
   };
 </script>
 </body>
