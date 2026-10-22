@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chatbot Menu</title>
+<title>Chatbot Perpustakaan</title>
 <style>
   :root { --ink:#1f2a37; --paper:#ffffff; --bg:#f3f5f7; --accent:#2f6f5e; --accent-ink:#ffffff; --bubble:#e8eef0; }
   @media (prefers-color-scheme: dark) {
@@ -14,70 +14,236 @@
   main { max-width:640px; margin:0 auto; padding:48px 20px; }
   h1 { font-size:1.6rem; margin:0 0 8px; }
 
-  #chat-toggle {
-    position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
-    border:0; background:var(--accent); color:var(--accent-ink); font-size:24px; cursor:pointer;
-  }
-  #chat-box {
-    position:fixed; right:20px; bottom:90px; width:min(340px, calc(100vw - 40px)); max-height:70vh;
+  #chat-toggle { position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
+    border:0; background:var(--accent); color:var(--accent-ink); font-size:24px; cursor:pointer; }
+  #chat-box { position:fixed; right:20px; bottom:90px; width:min(360px, calc(100vw - 40px)); height:min(540px, 75vh);
     display:none; flex-direction:column; background:var(--paper); border:1px solid var(--bubble);
-    border-radius:14px; overflow:hidden;
-  }
+    border-radius:14px; overflow:hidden; }
   #chat-box.open { display:flex; }
   #chat-head { padding:12px 16px; background:var(--accent); color:var(--accent-ink); font-weight:600; }
-  #chat-log { padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
-  .msg { padding:9px 12px; border-radius:12px; max-width:85%; line-height:1.4; }
+  #chat-log { padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .msg { padding:9px 12px; border-radius:12px; max-width:88%; line-height:1.4; }
   .bot { background:var(--bubble); align-self:flex-start; }
   .user { background:var(--accent); color:var(--accent-ink); align-self:flex-end; }
-  #chat-options { padding:10px 14px 14px; display:flex; flex-wrap:wrap; gap:8px; }
-  #chat-options button {
-    border:1px solid var(--accent); background:transparent; color:var(--ink);
-    padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit;
-  }
+  #chat-options { padding:8px 14px; display:flex; flex-wrap:wrap; gap:8px; max-height:35%; overflow-y:auto; border-top:1px solid var(--bubble); }
+  #chat-options button { border:1px solid var(--accent); background:transparent; color:var(--ink);
+    padding:7px 12px; border-radius:14px; cursor:pointer; font:inherit; font-size:.9rem; text-align:left; }
   #chat-options button:hover { background:var(--accent); color:var(--accent-ink); }
+  #chat-form { display:flex; gap:8px; padding:10px 14px; border-top:1px solid var(--bubble); }
+  #chat-input { flex:1; padding:8px 12px; border-radius:999px; border:1px solid var(--bubble);
+    background:var(--bg); color:var(--ink); font:inherit; }
+  #chat-send { border:0; background:var(--accent); color:var(--accent-ink); padding:8px 14px; border-radius:999px; cursor:pointer; font:inherit; }
   :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 </style>
 </head>
 <body>
 
 <main>
-  <h1>Chatbot Perpustakaan Wiraraja</h1>
-  <p>Klik tombol bulat di pojok kanan bawah untuk membuka menu chatbot.</p>
+  <h1>Halaman Uji Coba Chatbot Perpustakaan</h1>
+  <p>Klik tombol bulat di pojok kanan bawah. Kamu bisa pilih menu atau mengetik pertanyaan.</p>
 </main>
 
 <button id="chat-toggle" aria-label="Buka chatbot">💬</button>
 <section id="chat-box" aria-live="polite">
-  <div id="chat-head">Asisten</div>
+  <div id="chat-head">Asisten Perpustakaan</div>
   <div id="chat-log"></div>
   <div id="chat-options"></div>
+  <form id="chat-form">
+    <input id="chat-input" type="text" placeholder="Ketik pertanyaanmu..." autocomplete="off" aria-label="Pertanyaan">
+    <button id="chat-send" type="submit">Kirim</button>
+  </form>
 </section>
 
 <script>
-  // ====== EDIT BAGIAN INI SAJA UNTUK MENGUBAH ISI MENU ======
-  const menu = {
-    start: {
-      text: "Halo! Mau tanya apa?",
-      options: ["Jam layanan", "Lokasi", "Kontak"]
-    },
-    "Jam layanan": {
-      text: "Kami buka Senin–Jumat, pukul 08.00–16.00.",
-      options: ["Lokasi", "Kontak", "Menu utama"]
-    },
-    "Lokasi": {
-      text: "Kami berada di Jl. Raya Sumenep-Pamekasan KM.5, Sumenep.",
-      options: ["Jam layanan", "Kontak", "Menu utama"]
-    },
-    "Kontak": {
-      text: "Hubungi kami di perpustakaan@wiraraja.ac.id atau 0821-4332-5695.",
-      options: ["Jam layanan", "Lokasi", "Menu utama"]
-    }
-  };
-  // ===========================================================
+  // ====== DATA FAQ (berasal dari perpustakaan_faq.csv) ======
+  // k = kategori, q = pertanyaan, a = jawaban
+  const FAQ = [
+ {
+  "k": "Keanggotaan",
+  "q": "Apa syarat utama jika saya mau buat kartu anggota perpustakaan?",
+  "a": "Syarat utamanya adalah mengisi formulir pendaftaran, dan membawa kartu identitas yang masih berlaku (KTP/Kartu Pelajar/KTM) sebagai bukti domisili atau status Anda."
+ },
+ {
+  "k": "Keanggotaan",
+  "q": "Apakah pendaftaran anggota perpustakaan ini ada biayanya?",
+  "a": "Pendaftaran anggota untuk perpustakaan umum biasanya gratis. Namun, untuk jenis perpustakaan tertentu (akademik/khusus), mungkin ada biaya bagi non-anggota institusi."
+ },
+ {
+  "k": "Kunjungan",
+  "q": "Jam berapa perpustakaan ini mulai buka hari ini?",
+  "a": "Jam operasional kami bervariasi. Mohon cek situs web resmi kami atau bagian informasi kontak untuk mengetahui jam buka dan tutup yang spesifik untuk hari ini."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Maksimal saya bisa pinjam berapa eksemplar buku?",
+  "a": "Kebijakan hak pinjam bervariasi tergantung jenis keanggotaan Anda. Anggota umum biasanya dapat meminjam 3-5 eksemplar, sementara dosen/staf bisa meminjam lebih banyak."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Berapa lama batas waktu peminjaman buku?",
+  "a": "Batas waktu peminjaman standar adalah 7 hari (satu minggu) atau 14 hari (dua minggu) per eksemplar. Harap perhatikan tanggal jatuh tempo pada slip pinjam Anda."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Bagaimana cara saya memperpanjang masa pinjam buku online?",
+  "a": "Anda dapat melakukan perpanjangan mandiri melalui Katalog Online (OPAC) di situs web kami, selama buku tersebut belum dipesan oleh pemustaka lain. Perpanjangan umumnya hanya bisa dilakukan satu kali."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Kalau saya telat mengembalikan, dendanya berapa ya?",
+  "a": "Untuk keterlambatan, Anda akan dikenakan denda sebesar antara Rp 500,- hingga Rp 1.000,- per hari per eksemplar. Denda dihitung sejak tanggal jatuh tempo."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Apa yang harus saya lakukan kalau buku pinjaman saya hilang?",
+  "a": "Anda wajib segera melaporkan kehilangan tersebut ke bagian sirkulasi dan menggantinya dengan buku baru (judul, pengarang, dan edisi yang sama atau edisi terbaru) sesuai ketentuan yang berlaku."
+ },
+ {
+  "k": "Layanan/Koleksi",
+  "q": "Saya bisa cari koleksi digital atau e-book di mana?",
+  "a": "Koleksi digital dan e-book kami dapat diakses melalui portal E-Resources di situs web perpustakaan. Akses mungkin memerlukan login akun anggota Anda."
+ },
+ {
+  "k": "Layanan/Fasilitas",
+  "q": "Apakah di perpustakaan ada Wi-Fi gratis untuk pengunjung?",
+  "a": "Ya, kami menyediakan layanan Wi-Fi gratis. Anda dapat terhubung menggunakan kredensial yang tersedia di area informasi atau meja layanan."
+ },
+ {
+  "k": "Keanggotaan",
+  "q": "Apakah pendaftaran anggota memerlukan biaya administrasi?",
+  "a": "Pendaftaran anggota untuk perpustakaan umum biasanya gratis."
+ },
+ {
+  "k": "Keanggotaan",
+  "q": "Dokumen apa yang harus saya siapkan untuk mendaftar anggota?",
+  "a": "Syarat utamanya adalah mengisi formulir pendaftaran, dan membawa kartu identitas yang masih berlaku (KTP/Kartu Pelajar/KTM)."
+ },
+ {
+  "k": "Keanggotaan",
+  "q": "Saya mahasiswa, bagaimana cara buat kartu perpustakaan?",
+  "a": "Syarat utamanya adalah mengisi formulir pendaftaran dan membawa kartu identitas (KTM)."
+ },
+ {
+  "k": "Keanggotaan",
+  "q": "Bagaimana cara perpanjang masa berlaku kartu anggota?",
+  "a": "Prosedur perpanjangan kartu dapat dilihat di situs web resmi atau tanyakan di meja informasi."
+ },
+ {
+  "k": "Kunjungan",
+  "q": "Apakah perpustakaan buka di hari Minggu atau hari libur nasional?",
+  "a": "Jam operasional kami bervariasi. Mohon cek situs web resmi kami."
+ },
+ {
+  "k": "Kunjungan",
+  "q": "Sampai jam berapa perpustakaan buka?",
+  "a": "Jam operasional kami bervariasi. Mohon cek situs web resmi kami atau bagian informasi kontak."
+ },
+ {
+  "k": "Kunjungan",
+  "q": "Jam berapa perpustakaan mulai buka di pagi hari?",
+  "a": "Jam operasional kami bervariasi. Mohon cek situs web resmi kami."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Berapa batas maksimal buku yang dapat saya pinjam sekaligus?",
+  "a": "Anggota umum biasanya dapat meminjam 3-5 eksemplar, sementara dosen/staf bisa meminjam lebih banyak."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Saya ingin perpanjang pinjaman buku saya, bagaimana caranya?",
+  "a": "Anda dapat melakukan perpanjangan mandiri melalui Katalog Online (OPAC) di situs web kami."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Apakah ada biaya denda untuk keterlambatan pengembalian?",
+  "a": "Anda akan dikenakan denda sebesar antara Rp 500,- hingga Rp 1.000,- per hari per eksemplar."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Saya kehilangan buku yang dipinjam, apa yang harus saya ganti?",
+  "a": "Anda wajib segera melaporkan kehilangan tersebut dan menggantinya dengan buku baru (judul, pengarang, dan edisi yang sama)."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Buku saya sudah jatuh tempo, bagaimana cara membayar dendanya?",
+  "a": "Pembayaran denda dapat dilakukan di bagian sirkulasi."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Berapa lama waktu pinjam untuk buku fiksi?",
+  "a": "Batas waktu peminjaman standar adalah 7 hari atau 14 hari per eksemplar."
+ },
+ {
+  "k": "Layanan/Koleksi",
+  "q": "Di mana saya bisa akses jurnal dan database online?",
+  "a": "Koleksi digital dan e-book kami dapat diakses melalui portal E-Resources di situs web perpustakaan."
+ },
+ {
+  "k": "Layanan/Koleksi",
+  "q": "Apakah perpustakaan menyediakan akses ke database berbayar?",
+  "a": "Koleksi digital dan e-book kami dapat diakses melalui portal E-Resources di situs web perpustakaan."
+ },
+ {
+  "k": "Layanan/Koleksi",
+  "q": "Bagaimana cara mencari koleksi buku yang ada di rak?",
+  "a": "Anda dapat menggunakan Katalog Online (OPAC) atau bertanya di meja informasi."
+ },
+ {
+  "k": "Layanan/Fasilitas",
+  "q": "Saya ingin menggunakan internet, apakah tersedia wifi gratis?",
+  "a": "Ya, kami menyediakan layanan Wi-Fi gratis."
+ },
+ {
+  "k": "Layanan/Fasilitas",
+  "q": "Apakah ada ruang belajar kelompok yang bisa saya sewa?",
+  "a": "Ya, kami menyediakan ruang diskusi atau ruang belajar kelompok yang ketersediaannya dapat dicek di meja layanan."
+ },
+ {
+  "k": "Layanan/Fasilitas",
+  "q": "Di mana lokasi ruang fotokopi atau mesin printer?",
+  "a": "Ruang fotokopi dan printer biasanya berada di dekat area koleksi umum atau di lantai dasar."
+ },
+ {
+  "k": "Layanan/Fasilitas",
+  "q": "Bolehkah saya membawa laptop pribadi ke dalam perpustakaan?",
+  "a": "Ya, Anda diperbolehkan membawa laptop pribadi."
+ },
+ {
+  "k": "Layanan/Fasilitas",
+  "q": "Apakah ada loker penitipan barang di sini?",
+  "a": "Loker penitipan barang tersedia di dekat pintu masuk utama."
+ },
+ {
+  "k": "Kunjungan",
+  "q": "Bolehkah saya masuk ke perpustakaan tanpa menjadi anggota?",
+  "a": "Kunjungan dan membaca di tempat diperbolehkan, namun Anda tidak bisa meminjam buku."
+ },
+ {
+  "k": "Kunjungan",
+  "q": "Apa saja yang tidak boleh dibawa masuk ke perpustakaan?",
+  "a": "Tas besar, makanan, dan minuman biasanya tidak diperbolehkan masuk ke area koleksi."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Buku saya sudah di reservasi orang lain, apa masih bisa saya perpanjang?",
+  "a": "Perpanjangan tidak bisa dilakukan jika buku sudah direservasi oleh pemustaka lain."
+ },
+ {
+  "k": "Peminjaman",
+  "q": "Saya mau pinjam buku, bagaimana prosedurnya?",
+  "a": "Anda dapat mencari buku melalui OPAC, bawa buku dan kartu anggota ke meja sirkulasi."
+ }
+];
+  // ==========================================================
 
-  const box = document.getElementById("chat-box");
   const log = document.getElementById("chat-log");
   const opts = document.getElementById("chat-options");
-  const toggle = document.getElementById("chat-toggle");
+  const box = document.getElementById("chat-box");
+  const input = document.getElementById("chat-input");
+  const categories = [...new Set(FAQ.map(f => f.k))];
+
+  const STOP = new Set("apa apakah bagaimana berapa kapan dimana di mana yang dan atau saya aku ini itu ada bisa dapat boleh untuk dengan dari ke jika kalau mau ingin cara ya kah lah nya pada akan sudah masih bolehkah".split(" "));
+  const tokens = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w && !STOP.has(w));
 
   function addMsg(text, who) {
     const el = document.createElement("div");
@@ -87,25 +253,67 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  function show(key) {
-    const node = menu[key];
-    addMsg(node.text, "bot");
+  function setOptions(items) {
     opts.innerHTML = "";
-    node.options.forEach(label => {
+    items.forEach(([label, fn]) => {
       const b = document.createElement("button");
       b.textContent = label;
-      b.onclick = () => {
-        addMsg(label, "user");
-        show(label === "Menu utama" ? "start" : label);
-      };
+      b.onclick = () => { addMsg(label, "user"); fn(); };
       opts.appendChild(b);
     });
   }
 
+  function showMain() {
+    addMsg("Halo! Pilih topik di bawah, atau ketik pertanyaanmu.", "bot");
+    setOptions(categories.map(c => [c, () => showCategory(c)]));
+  }
+
+  function showCategory(cat) {
+    addMsg("Pertanyaan seputar " + cat + ":", "bot");
+    const list = FAQ.filter(f => f.k === cat).map(f => [f.q, () => showAnswer(f, cat)]);
+    list.push(["Menu utama", showMain]);
+    setOptions(list);
+  }
+
+  function showAnswer(f, cat) {
+    addMsg(f.a, "bot");
+    setOptions([["Pertanyaan lain: " + f.k, () => showCategory(f.k)], ["Menu utama", showMain]]);
+  }
+
+  function search(text) {
+    const qt = tokens(text);
+    if (!qt.length) return [];
+    return FAQ.map(f => {
+      const ft = new Set(tokens(f.q + " " + f.k));
+      const hit = qt.filter(w => ft.has(w) || [...ft].some(x => x.length > 3 && (x.startsWith(w) || w.startsWith(x)))).length;
+      return { f, score: hit / qt.length };
+    }).filter(r => r.score >= 0.5).sort((a, b) => b.score - a.score);
+  }
+
+  document.getElementById("chat-form").onsubmit = e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    addMsg(text, "user");
+    const res = search(text);
+    if (!res.length) {
+      addMsg("Maaf, aku belum menemukan jawaban untuk itu. Coba pilih topik di bawah.", "bot");
+      setOptions(categories.map(c => [c, () => showCategory(c)]));
+    } else if (res[0].score >= 0.8 || res.length === 1) {
+      showAnswer(res[0].f);
+    } else {
+      addMsg("Apakah salah satu ini yang kamu maksud?", "bot");
+      const items = res.slice(0, 4).map(r => [r.f.q, () => showAnswer(r.f)]);
+      items.push(["Menu utama", showMain]);
+      setOptions(items);
+    }
+  };
+
   let started = false;
-  toggle.onclick = () => {
+  document.getElementById("chat-toggle").onclick = () => {
     box.classList.toggle("open");
-    if (!started) { started = true; show("start"); }
+    if (!started) { started = true; showMain(); }
   };
 </script>
 </body>
