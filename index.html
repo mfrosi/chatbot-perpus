@@ -3,212 +3,240 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chatbot Perpustakaan UNIJA</title>
+<title>Asisten Cerdas Perpustakaan UNIJA</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-  :root { --ink:#1f2a37; --paper:#ffffff; --bg:#f3f5f7; --accent:#2f6f5e; --accent-ink:#ffffff; --bubble:#e8eef0; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); }
-  main { max-width:640px; margin:0 auto; padding:48px 20px; }
-  h1 { font-size:1.6rem; margin:0 0 8px; }
+  :root { --bg: #f0f4f8; --paper: #ffffff; --ink: #1f2937; --accent: #10b981; --accent-hover: #059669; --bubble-user: #d1fae5; --bubble-bot: #f3f4f6; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg); color: var(--ink); height: 100vh; display: flex; flex-direction: column; }
+  
+  /* Layar Auth */
+  #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; }
+  .auth-card { background: var(--paper); padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+  .auth-card h1 { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent-hover); }
+  .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; }
+  .auth-card button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+  
+  /* Layar Chat Utama */
+  #chat-screen { display: none; flex-direction: column; height: 100vh; max-width: 900px; margin: 0 auto; width: 100%; background: var(--paper); box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+  #chat-header { padding: 16px 24px; background: var(--paper); border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+  #chat-header h2 { font-size: 1.2rem; margin: 0; }
+  #btn-rating { background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+  
+  #chat-log { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; line-height: 1.5; font-size: 1rem; word-wrap: break-word; }
+  .user { background: var(--bubble-user); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .bot { background: var(--bubble-bot); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .img-preview { max-width: 200px; border-radius: 8px; margin-bottom: 8px; display: block; }
+  
+  /* Area Input */
+  #input-area { padding: 16px 24px; border-top: 1px solid #e5e7eb; background: var(--paper); display: flex; gap: 12px; align-items: center; }
+  #file-label { cursor: pointer; font-size: 1.5rem; padding: 8px; border-radius: 50%; transition: background 0.2s; }
+  #file-label:hover { background: #f3f4f6; }
+  #image-upload { display: none; }
+  #user-input { flex: 1; padding: 14px 20px; border: 1px solid #d1d5db; border-radius: 999px; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+  #user-input:focus { border-color: var(--accent); }
+  #send-btn { background: var(--accent); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+  #send-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 
-  #chat-toggle {
-    position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
-    border:0; background:var(--accent); color:var(--accent-ink); font-size:24px; cursor:pointer;
-    display: none;
-  }
-  #chat-box {
-    position:fixed; right:20px; bottom:90px; width:min(340px, calc(100vw - 40px)); height:70vh;
-    display:none; flex-direction:column; background:var(--paper); border:1px solid var(--bubble);
-    border-radius:14px; overflow:hidden;
-  }
-  #chat-box.open { display:flex; }
-  #chat-head { padding:12px 16px; background:var(--accent); color:var(--accent-ink); font-weight:600; }
-  
-  /* Form Pengisian Data */
-  #auth-screen { padding: 20px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; justify-content: center; }
-  #auth-screen input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-  #auth-screen button { padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-  
-  /* Area Chat (Disembunyikan di awal) */
-  #chat-area { display: none; flex-direction: column; flex-grow: 1; overflow: hidden; }
-  #chat-log { padding:14px; overflow-y:auto; flex-grow: 1; display:flex; flex-direction:column; gap:8px; }
-  .msg { padding:9px 12px; border-radius:12px; max-width:85%; line-height:1.4; font-size: 14px; }
-  .bot { background:var(--bubble); align-self:flex-start; }
-  .user { background:var(--accent); color:var(--accent-ink); align-self:flex-end; }
-  #chat-options { padding:10px 14px 14px; display:flex; flex-wrap:wrap; gap:8px; border-top: 1px solid var(--bubble); }
-  #chat-options button {
-    border:1px solid var(--accent); background:transparent; color:var(--ink);
-    padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit; font-size: 13px; text-align: left;
-  }
-  #chat-options button:hover { background:var(--accent); color:var(--accent-ink); }
-  
-  /* Rating Bintang */
-  .rating-btn { font-size: 20px !important; padding: 4px 8px !important; }
+  /* Rating Modal */
+  #rating-modal { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+  .rating-box { background: white; padding: 30px; border-radius: 16px; text-align: center; }
+  .stars button { font-size: 2rem; background: none; border: none; cursor: pointer; margin: 0 5px; }
 </style>
+<!-- Menggunakan Import Map untuk memanggil Gemini SDK -->
+<script type="importmap">
+  {
+    "imports": {
+      "@google/generative-ai": "https://esm.run/@google/generative-ai"
+    }
+  }
+</script>
 </head>
 <body>
 
-<main>
-  <h1>Layanan Informasi UPT Perpustakaan UNIJA</h1>
-  <p id="status-text">Mempersiapkan data FAQ...</p>
-</main>
-
-<button id="chat-toggle">💬</button>
-<section id="chat-box">
-  <div id="chat-head">Asisten Perpustakaan</div>
-  
-  <!-- Layar Pengisian Data Diri -->
-  <div id="auth-screen">
-    <p style="margin-top:0; font-size:14px; text-align:center;">Silakan isi data diri sebelum memulai obrolan.</p>
+<div id="auth-screen">
+  <div class="auth-card">
+    <h1>Asisten Perpustakaan</h1>
+    <p style="margin-bottom: 20px; color: #6b7280;" id="status-text">Memuat sistem pedoman FAQ...</p>
     <input type="text" id="input-nama" placeholder="Nama Lengkap" required>
     <input type="text" id="input-prodi" placeholder="Program Studi" required>
-    <button id="btn-mulai">Mulai Obrolan</button>
+    <button id="btn-mulai" disabled>Mulai Obrolan</button>
   </div>
+</div>
 
-  <!-- Layar Chat Utama -->
-  <div id="chat-area">
-    <div id="chat-log"></div>
-    <div id="chat-options"></div>
+<div id="chat-screen">
+  <div id="chat-header">
+    <h2>💬 Asisten Perpustakaan UNIJA</h2>
+    <button id="btn-rating">Akhiri & Beri Rating</button>
   </div>
-</section>
+  <div id="chat-log"></div>
+  <div id="input-area">
+    <label id="file-label" for="image-upload" title="Unggah Gambar">🖼️</label>
+    <input type="file" id="image-upload" accept="image/*">
+    <input type="text" id="user-input" placeholder="Tanyakan seputar perpustakaan atau jelaskan gambar yang diunggah..." autocomplete="off">
+    <button id="send-btn">➤</button>
+  </div>
+</div>
 
-<script>
-  // GANTI TEKS DI BAWAH INI DENGAN URL DARI GOOGLE APPS SCRIPT KAMU
+<div id="rating-modal">
+  <div class="rating-box">
+    <h3>Seberapa puas Anda?</h3>
+    <p style="margin: 10px 0; color: #6b7280;">Bantu kami memenuhi standar akreditasi.</p>
+    <div class="stars" id="star-container"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { GoogleGenerativeAI } from "@google/generative-ai";
+
+  // =========================================================================
+  // 1. MASUKKAN API KEY GEMINI DAN URL APPS SCRIPT DI SINI
+  // =========================================================================
+  const GEMINI_API_KEY = "AIzaSyAr1H-FsQ8xPaEzeobxeWLpqNm-emrvBmE"; 
   const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbx-6Yvw_exsElKxdmZE_VtNrmxZ6Cdm2g967ShEL_ZLhjviQ-pjOVCoxSBf2HDGzNnv/exec";
+  // =========================================================================
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  // Menggunakan model flash yang cepat dan mendukung teks+gambar
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   let dataUser = { nama: "", prodi: "" };
-  let menu = {
-    start: { text: "Halo! Selamat datang di layanan informasi UPT Perpustakaan Universitas Wiraraja. Silakan pilih kategori pertanyaan:", options: [] },
-    "Menu utama": { text: "Kembali ke menu utama. Silakan pilih kategori:", options: [] }
-  };
+  let systemInstruction = "Kamu adalah asisten resmi UPT Perpustakaan Universitas Wiraraja (UNIJA). Jawablah dengan ramah, gunakan bahasa Indonesia yang baik. Jawab hanya berdasarkan panduan FAQ berikut ini:\n\n";
+  let chatHistory = [];
 
-  const statusText = document.getElementById("status-text");
-  const box = document.getElementById("chat-box");
-  const toggle = document.getElementById("chat-toggle");
+  // Elemen DOM
+  const authScreen = document.getElementById('auth-screen');
+  const chatScreen = document.getElementById('chat-screen');
+  const btnMulai = document.getElementById('btn-mulai');
+  const statusText = document.getElementById('status-text');
+  const chatLog = document.getElementById('chat-log');
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const imageUpload = document.getElementById('image-upload');
   
-  const authScreen = document.getElementById("auth-screen");
-  const chatArea = document.getElementById("chat-area");
-  const btnMulai = document.getElementById("btn-mulai");
-  const inputNama = document.getElementById("input-nama");
-  const inputProdi = document.getElementById("input-prodi");
-
-  const log = document.getElementById("chat-log");
-  const opts = document.getElementById("chat-options");
-
-  // Load CSV
+  // Baca CSV dan gabungkan menjadi instruksi untuk Gemini
   Papa.parse("perpustakaan_faq.csv", {
     download: true, header: true, skipEmptyLines: true,
     complete: function(results) {
-      const data = results.data;
-      const kategoriSet = new Set();
-      data.forEach(row => { if(row.kategori) kategoriSet.add(row.kategori); });
-
-      const kategoriArr = Array.from(kategoriSet);
-      // Tambahkan tombol Akhiri Obrolan di menu utama
-      menu["start"].options = [...kategoriArr, "Akhiri Obrolan & Beri Rating"];
-      menu["Menu utama"].options = [...kategoriArr, "Akhiri Obrolan & Beri Rating"];
-
-      kategoriArr.forEach(kat => {
-        const pertanyaanList = data.filter(r => r.kategori === kat).map(r => r.user_query);
-        menu[kat] = { 
-          text: "Pilih pertanyaan terkait " + kat + ":", 
-          options: [...pertanyaanList, "Menu utama", "Akhiri Obrolan & Beri Rating"] 
-        };
-        
-        data.filter(r => r.kategori === kat).forEach(r => {
-          menu[r.user_query] = { 
-            text: r.chatbot_response, 
-            options: ["Kembali ke " + kat, "Menu utama", "Akhiri Obrolan & Beri Rating"] 
-          };
-          menu["Kembali ke " + kat] = menu[kat];
-        });
+      results.data.forEach(row => {
+        if(row.user_query && row.chatbot_response) {
+          systemInstruction += `Tanya: ${row.user_query}\nJawab: ${row.chatbot_response}\n\n`;
+        }
       });
-      statusText.innerText = "Sistem siap. Klik tombol 💬 di pojok kanan bawah.";
-      toggle.style.display = "block";
+      statusText.innerText = "Sistem siap digunakan!";
+      btnMulai.disabled = false;
     }
   });
 
-  // Logika Mulai Chat
   btnMulai.onclick = () => {
-    if(inputNama.value.trim() === "" || inputProdi.value.trim() === "") {
-      alert("Harap isi Nama dan Program Studi terlebih dahulu!");
-      return;
-    }
-    dataUser.nama = inputNama.value.trim();
-    dataUser.prodi = inputProdi.value.trim();
+    const nama = document.getElementById('input-nama').value.trim();
+    const prodi = document.getElementById('input-prodi').value.trim();
+    if(!nama || !prodi) return alert("Harap isi Nama dan Prodi!");
     
+    dataUser = { nama, prodi };
     authScreen.style.display = "none";
-    chatArea.style.display = "flex";
-    show("start");
+    chatScreen.style.display = "flex";
+    
+    addMsg("bot", `Halo ${nama} dari prodi ${prodi}! Selamat datang di layanan informasi UPT Perpustakaan UNIJA. Ada yang bisa saya bantu terkait perpustakaan, atau ada gambar kendala yang ingin kamu tunjukkan?`);
   };
 
-  toggle.onclick = () => { box.classList.toggle("open"); };
-
-  function addMsg(text, who) {
-    const el = document.createElement("div");
-    el.className = "msg " + who;
-    el.textContent = text;
-    log.appendChild(el);
-    log.scrollTop = log.scrollHeight;
-  }
-
-  function show(key) {
-    if (key === "Akhiri Obrolan & Beri Rating") {
-      tampilkanRating();
-      return;
-    }
-
-    const node = menu[key];
-    if (!node) return;
-    addMsg(node.text, "bot");
-    opts.innerHTML = "";
-    node.options.forEach(label => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.onclick = () => {
-        addMsg(label, "user");
-        show(label === "Menu utama" ? "start" : label);
-      };
-      opts.appendChild(b);
+  // Fungsi mengubah gambar menjadi format yang bisa dibaca AI
+  async function fileToGenerativePart(file) {
+    const base64EncodedDataPromise = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.readAsDataURL(file);
     });
+    return {
+      inlineData: { data: await base64EncodedDataPromise, mimeType: file.type },
+    };
   }
 
-  function tampilkanRating() {
-    addMsg("Seberapa puas Anda dengan jawaban Chatbot ini? (1=Sangat Buruk, 5=Sangat Baik)", "bot");
-    opts.innerHTML = "";
-    const ratings = ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"];
+  function addMsg(who, text, imgFile = null) {
+    const div = document.createElement('div');
+    div.className = `msg ${who}`;
     
-    ratings.forEach((stars, index) => {
-      const b = document.createElement("button");
-      b.className = "rating-btn";
-      b.textContent = stars;
-      b.onclick = () => {
-        const ratingAngka = index + 1;
-        addMsg(stars, "user");
-        kirimDataKeGoogle(ratingAngka);
-      };
-      opts.appendChild(b);
-    });
+    if(imgFile) {
+      const img = document.createElement('img');
+      img.className = 'img-preview';
+      img.src = URL.createObjectURL(imgFile);
+      div.appendChild(img);
+    }
+    
+    const p = document.createElement('div');
+    p.innerHTML = text.replace(/\n/g, "<br>");
+    div.appendChild(p);
+    
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  function kirimDataKeGoogle(rating) {
-    opts.innerHTML = ""; // Kosongkan opsi agar tidak bisa diklik dua kali
-    addMsg("Sedang menyimpan data kunjunganmu...", "bot");
+  async function handleSend() {
+    const text = userInput.value.trim();
+    const file = imageUpload.files[0];
+    
+    if(!text && !file) return;
+
+    // Tampilkan pesan user
+    addMsg("user", text, file);
+    userInput.value = "";
+    imageUpload.value = "";
+    sendBtn.disabled = true;
+
+    // Siapkan data untuk Gemini
+    let promptParts = [];
+    promptParts.push(systemInstruction); // Suntikkan aturan FAQ di setiap awal pesan
+    
+    if(file) {
+      const imagePart = await fileToGenerativePart(file);
+      promptParts.push(imagePart);
+    }
+    promptParts.push("Pengguna bertanya: " + text);
+
+    addMsg("bot", "<i>Sedang mengetik...</i>");
+    const typingIndicator = chatLog.lastElementChild;
+
+    try {
+      const result = await model.generateContent(promptParts);
+      const response = await result.response;
+      typingIndicator.querySelector('div').innerHTML = response.text().replace(/\n/g, "<br>");
+    } catch (error) {
+      typingIndicator.querySelector('div').innerHTML = "Maaf, terjadi kesalahan saat menghubungi server AI. Pastikan API Key valid.";
+      console.error(error);
+    }
+    sendBtn.disabled = false;
+  }
+
+  sendBtn.onclick = handleSend;
+  userInput.onkeypress = (e) => { if(e.key === "Enter") handleSend(); };
+
+  // Logika Rating & Apps Script (Tetap berfungsi seperti sebelumnya)
+  document.getElementById('btn-rating').onclick = () => {
+    document.getElementById('rating-modal').style.display = "flex";
+    const starsDiv = document.getElementById('star-container');
+    starsDiv.innerHTML = "";
+    ["⭐","⭐⭐","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐⭐⭐⭐"].forEach((star, index) => {
+      const b = document.createElement('button');
+      b.textContent = star;
+      b.onclick = () => kirimDataKeGoogle(index + 1, star);
+      starsDiv.appendChild(b);
+    });
+  };
+
+  function kirimDataKeGoogle(rating, starStr) {
+    document.getElementById('rating-modal').style.display = "none";
+    addMsg("user", `Memberikan rating: ${starStr}`);
+    addMsg("bot", "Menyimpan data kunjungan...");
     
     fetch(GOOGLE_APP_URL, {
       method: "POST",
-      // text/plain digunakan untuk menghindari error CORS bawaan browser
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        nama: dataUser.nama,
-        prodi: dataUser.prodi,
-        rating: rating
-      })
-    }).then(response => {
-      addMsg("Terima kasih! Penilaianmu sudah tersimpan untuk peningkatan layanan perpustakaan kami. Sampai jumpa!", "bot");
-    }).catch(error => {
-      addMsg("Terima kasih atas penilaiannya!", "bot");
+      body: JSON.stringify({ nama: dataUser.nama, prodi: dataUser.prodi, rating: rating })
+    }).then(() => {
+      addMsg("bot", "Terima kasih! Penilaianmu sudah tersimpan.");
+    }).catch(() => {
+      addMsg("bot", "Terima kasih atas penilaiannya!");
     });
   }
 </script>
